@@ -19,6 +19,8 @@ import (
 func (s *Server) asyncClusterScaling(nodeRegistry *structs.NodeRegistry,
 	jobRegistry *structs.JobScalingPolicies) {
 
+	logging.Debug("core/cluster_scaling: initiating cluster scaling")
+
 	// Setup our wait group to ensure we block until all worker pool scaling
 	// operations have completed.
 	var wg sync.WaitGroup

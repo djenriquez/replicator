@@ -149,6 +149,8 @@ func (s *Server) clusterScalingTicker(nodeReg *structs.NodeRegistry, jobPol *str
 	)
 	defer ticker.Stop()
 
+	logging.Debug("core/runner: Initiating cluster scaling ticker with interval: %v", s.config.ClusterScalingInterval)
+
 	for {
 		select {
 		case <-ticker.C:
