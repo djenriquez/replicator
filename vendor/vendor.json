@@ -327,6 +327,12 @@
 			"revisionTime": "2017-03-07T21:44:13Z"
 		},
 		{
+			"checksumSHA1": "y+AeKVZoX0gB+DZW4Arzkb3tTVc=",
+			"path": "github.com/hashicorp/go-immutable-radix",
+			"revision": "7f3cd4390caab3250a57f30efdb2a65dd7649ecf",
+			"revisionTime": "2018-01-29T17:09:00Z"
+		},
+		{
 			"checksumSHA1": "TNlVzNR1OaajcNi3CbQ3bGbaLGU=",
 			"origin": "github.com/hashicorp/nomad/vendor/github.com/hashicorp/go-msgpack/codec",
 			"path": "github.com/hashicorp/go-msgpack/codec",
@@ -427,8 +433,20 @@
 			"revisionTime": "2015-11-16T02:03:38Z"
 		},
 		{
+			"checksumSHA1": "JfDgoMtev66pAMpiMEV3H4fNsnU=",
+			"path": "github.com/hashicorp/nomad/acl",
+			"revision": "fb7e0c19d23324ce2b7a20ef57e048474c8d9e77",
+			"revisionTime": "2018-04-21T01:12:24Z"
+		},
+		{
 			"checksumSHA1": "+AJzrF1oVexRDvtZ7AIh4DcWg8k=",
 			"path": "github.com/hashicorp/nomad/api",
+			"revision": "fb7e0c19d23324ce2b7a20ef57e048474c8d9e77",
+			"revisionTime": "2018-04-21T01:12:24Z"
+		},
+		{
+			"checksumSHA1": "fqswK1Rf5F7cRNG+UHgY/gQFC78=",
+			"path": "github.com/hashicorp/nomad/api/contexts",
 			"revision": "fb7e0c19d23324ce2b7a20ef57e048474c8d9e77",
 			"revisionTime": "2018-04-21T01:12:24Z"
 		},
@@ -449,6 +467,12 @@
 			"path": "github.com/hashicorp/nomad/helper/flatmap",
 			"revision": "e943b953c19b862e3e4c4ba5fd311d52e9058499",
 			"revisionTime": "2017-03-15T18:30:28Z"
+		},
+		{
+			"checksumSHA1": "mSCo/iZUEOSpeX5NsGZZzFMJqto=",
+			"path": "github.com/hashicorp/nomad/helper/uuid",
+			"revision": "fb7e0c19d23324ce2b7a20ef57e048474c8d9e77",
+			"revisionTime": "2018-04-21T01:12:24Z"
 		},
 		{
 			"checksumSHA1": "OQErlRumqgjhgGzwleAE1hnUgJE=",
@@ -648,6 +672,12 @@
 			"path": "github.com/ugorji/go/codec",
 			"revision": "e943b953c19b862e3e4c4ba5fd311d52e9058499",
 			"revisionTime": "2017-03-15T18:30:28Z"
+		},
+		{
+			"checksumSHA1": "lL50kHZ0SBHzm1tjv9TqBrsc0+M=",
+			"path": "golang.org/x/crypto/blake2b",
+			"revision": "e73bf333ef8920dbb52ad18d4bd38ad9d9bc76d7",
+			"revisionTime": "2018-04-20T16:33:09Z"
 		},
 		{
 			"checksumSHA1": "NqlOcIqzDg46JUFFXqZdKUER0B0=",
