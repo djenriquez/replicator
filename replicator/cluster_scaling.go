@@ -56,8 +56,8 @@ func (s *Server) asyncClusterScaling(nodeRegistry *structs.NodeRegistry,
 	}
 
 	// Block on all worker pool scaling threads.
-	if waitTimeout(&wg, time.Duration(5)*time.Minute) {
-		logging.Warning("core/cluster_scaling: Timed out (5 mins) waiting for cluster scaling to complete")
+	if waitTimeout(&wg, time.Duration(90)*time.Second) {
+		logging.Warning("core/cluster_scaling: Timed out (90 secs) waiting for cluster scaling to complete")
 	} else {
 		elapsed := time.Since(start)
 		logging.Debug("core/cluster_scaling: Cluster scaling completed %s", elapsed)
@@ -141,7 +141,7 @@ func (s *Server) workerPoolScaling(id int, pools <-chan string,
 
 			// Call the scaling provider safety check to determine if we should
 			// proceed with scaling evaluation.
-			logging.Debug("core/cluster_scaling: thread %v - running safety check %v", id)
+			logging.Debug("core/cluster_scaling: thread %v - running safety check", id)
 			if scale := workerPool.ScalingProvider.SafetyCheck(workerPool); !scale {
 				logging.Debug("core/cluster_scaling: scaling operation for worker pool %v"+
 					"is not permitted by the scaling provider", workerPool.Name)

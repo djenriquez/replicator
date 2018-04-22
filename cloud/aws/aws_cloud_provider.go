@@ -294,12 +294,15 @@ func (sp *AwsScalingProvider) failedEventCleanup(workerNode string,
 func (sp *AwsScalingProvider) SafetyCheck(workerPool *structs.WorkerPool) bool {
 	// Retrieve ASG configuration so we can check min/max/desired counts
 	// against the desired scaling action.
+	start := time.Now()
+	logging.Debug("cloud/aws: Calling describe autoscaling group for %v", workerPool.Name)
 	asg, err := describeScalingGroup(workerPool.Name, sp.AsgService)
 	if err != nil {
 		logging.Error("cloud/aws: unable to retrieve worker pool autoscaling "+
 			"group configuration to evaluate constraints: %v", err)
 		return false
 	}
+	logging.Debug("cloud/aws: ASG call to %v finished, %v", workerPool.Name, time.Since(start))
 
 	// Get the worker pool ASG min/max/desired constraints.
 	desiredCap := *asg.AutoScalingGroups[0].DesiredCapacity
