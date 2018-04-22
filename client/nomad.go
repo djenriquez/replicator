@@ -167,7 +167,7 @@ func (c *nomadClient) DrainNode(nodeID string) (err error) {
 	// Initiate allocation draining for specified node.
 
 	drainSpec := &nomad.DrainSpec{
-		Deadline:         time.Minute * time.Duration(30),
+		Deadline:         time.Second * time.Duration(30),
 		IgnoreSystemJobs: true,
 	}
 	_, err = c.nomad.Nodes().UpdateDrain(nodeID, drainSpec, false, &nomad.WriteOptions{})
