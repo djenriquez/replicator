@@ -134,7 +134,7 @@ func (s *Server) workerPoolScaling(id int, pools <-chan string,
 			workerPool.State.ScalingDirection = poolCapacity.ScalingDirection
 
 			// Attempt to update state tracking information in Consul.
-			logging.Debug("core/cluster_scaling: thread %v - updating state tracking in Consul %v", id)
+			logging.Debug("core/cluster_scaling: thread %v - updating state tracking in Consul", id)
 			if err = consulClient.PersistState(workerPool.State); err != nil {
 				logging.Error("core/cluster_scaling: %v", err)
 			}
