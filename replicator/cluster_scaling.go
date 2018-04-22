@@ -19,6 +19,7 @@ import (
 func (s *Server) asyncClusterScaling(nodeRegistry *structs.NodeRegistry,
 	jobRegistry *structs.JobScalingPolicies) {
 
+	start := time.Now()
 	logging.Debug("core/cluster_scaling: initiating cluster scaling")
 
 	// Setup our wait group to ensure we block until all worker pool scaling
@@ -55,7 +56,13 @@ func (s *Server) asyncClusterScaling(nodeRegistry *structs.NodeRegistry,
 	}
 
 	// Block on all worker pool scaling threads.
-	wg.Wait()
+	if waitTimeout(&wg, time.Duration(5)*time.Minute) {
+		logging.Warning("core/cluster_scaling: Timed out (5 mins) waiting for cluster scaling to complete")
+	} else {
+		elapsed := time.Since(start)
+		logging.Debug("core/cluster_scaling: Cluster scaling completed %s", elapsed)
+	}
+
 }
 
 // workerPoolScaling is a thread safe method for scaling an individual
@@ -315,4 +322,20 @@ func checkCooldownThreshold(workerPool *structs.WorkerPool) bool {
 		"permitted", cooldown, workerPool.Name)
 
 	return true
+}
+
+// waitTimeout waits for the waitgroup for the specified max timeout.
+// Returns true if waiting timed out.
+func waitTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
+	c := make(chan struct{})
+	go func() {
+		defer close(c)
+		wg.Wait()
+	}()
+	select {
+	case <-c:
+		return false // completed normally
+	case <-time.After(timeout):
+		return true // timed out
+	}
 }
