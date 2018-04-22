@@ -62,6 +62,7 @@ func (s *Server) asyncClusterScaling(nodeRegistry *structs.NodeRegistry,
 		elapsed := time.Since(start)
 		logging.Debug("core/cluster_scaling: Cluster scaling completed %s", elapsed)
 	}
+	close(pools)
 
 }
 
@@ -84,6 +85,7 @@ func (s *Server) workerPoolScaling(id int, pools <-chan string,
 
 			// Obtain a read-only lock on the Node registry, grab a reference to
 			// our worker pool object and release the lock.
+			logging.Debug("core/cluster_scaling: thread %v - fetching worker pool %v", id, poolName)
 			nodeRegistry.Lock.RLock()
 			workerPool := nodeRegistry.WorkerPools[poolName]
 			nodeRegistry.Lock.RUnlock()
@@ -100,6 +102,7 @@ func (s *Server) workerPoolScaling(id int, pools <-chan string,
 			}
 
 			// Attempt to load state from persistent storage.
+			logging.Debug("core/cluster_scaling: thread %v - reading workerpool state", id)
 			consulClient.ReadState(workerPool.State, true)
 
 			// Setup a failure message to pass to the failsafe check.
@@ -111,6 +114,7 @@ func (s *Server) workerPoolScaling(id int, pools <-chan string,
 
 			// If the worker pool is in failsafe mode, decline to perform any scaling
 			// evaluation or action.
+			logging.Debug("core/cluster_scaling: thread %v - checking failsafe", id)
 			if !FailsafeCheck(workerPool.State, s.config, workerPool.RetryThreshold, msg) {
 				logging.Warning("core/cluster_scaling: worker pool %v is in failsafe "+
 					"mode, no scaling evaluations will be performed", workerPool.Name)
@@ -118,6 +122,7 @@ func (s *Server) workerPoolScaling(id int, pools <-chan string,
 			}
 
 			// Evaluate worker pool to determine if a scaling operation is required.
+			logging.Debug("core/cluster_scaling: thread %v - evaluating pool scaling", id)
 			scale, err := nomadClient.EvaluatePoolScaling(poolCapacity, workerPool, jobs)
 			if err != nil || !scale {
 				logging.Debug("core/cluster_scaling: scaling operation for worker pool %v "+
@@ -129,12 +134,14 @@ func (s *Server) workerPoolScaling(id int, pools <-chan string,
 			workerPool.State.ScalingDirection = poolCapacity.ScalingDirection
 
 			// Attempt to update state tracking information in Consul.
+			logging.Debug("core/cluster_scaling: thread %v - updating state tracking in Consul %v", id)
 			if err = consulClient.PersistState(workerPool.State); err != nil {
 				logging.Error("core/cluster_scaling: %v", err)
 			}
 
 			// Call the scaling provider safety check to determine if we should
 			// proceed with scaling evaluation.
+			logging.Debug("core/cluster_scaling: thread %v - running safety check %v", id)
 			if scale := workerPool.ScalingProvider.SafetyCheck(workerPool); !scale {
 				logging.Debug("core/cluster_scaling: scaling operation for worker pool %v"+
 					"is not permitted by the scaling provider", workerPool.Name)
@@ -142,6 +149,7 @@ func (s *Server) workerPoolScaling(id int, pools <-chan string,
 			}
 
 			// Determine if the scaling cooldown threshold has been met.
+			logging.Debug("core/cluster_scaling: thread %v - check cooldown threshold", id)
 			ok := checkCooldownThreshold(workerPool)
 			if !ok {
 				return
@@ -149,6 +157,7 @@ func (s *Server) workerPoolScaling(id int, pools <-chan string,
 
 			// Determine if we've reached the required number of consecutive scaling
 			// requests.
+			logging.Debug("core/cluster_scaling: thread %v - check scaling threshold", id)
 			ok = checkPoolScalingThreshold(workerPool, s.config)
 			if !ok {
 				return
@@ -167,6 +176,7 @@ func (s *Server) workerPoolScaling(id int, pools <-chan string,
 
 			if poolCapacity.ScalingDirection == structs.ScalingDirectionOut {
 				// Initiate cluster scaling operation by calling the scaling provider.
+				logging.Debug("core/cluster_scaling: thread %v - calling scale out", id)
 				err = workerPool.ScalingProvider.Scale(workerPool, s.config, nodeRegistry)
 				if err != nil {
 					logging.Error("core/cluster_scaling: an error occurred while "+
@@ -177,6 +187,7 @@ func (s *Server) workerPoolScaling(id int, pools <-chan string,
 
 				// Obtain a read/write lock on the node registry, write the worker
 				// pool state object back to the node registry and release the lock.
+				logging.Debug("core/cluster_scaling: thread %v - update node registry worker pool state", id)
 				nodeRegistry.Lock.Lock()
 				nodeRegistry.WorkerPools[workerPool.Name].State = workerPool.State
 				nodeRegistry.Lock.Unlock()
@@ -184,6 +195,7 @@ func (s *Server) workerPoolScaling(id int, pools <-chan string,
 
 			if poolCapacity.ScalingDirection == client.ScalingDirectionIn {
 				// Identify the least allocated node in the worker pool.
+				logging.Debug("core/cluster_scaling: thread %v - finding least allocated node", id)
 				nodeID, nodeIP := nomadClient.LeastAllocatedNode(poolCapacity,
 					workerPool.ProtectedNode)
 				if nodeIP == "" || nodeID == "" {
@@ -203,6 +215,7 @@ func (s *Server) workerPoolScaling(id int, pools <-chan string,
 				logging.Info("core/cluster_scaling: placing node %v from worker pool %v "+
 					"in drain mode", nodeID, workerPool.Name)
 
+				logging.Debug("core/cluster_scaling: thread %v - calling node drain", id)
 				if err = nomadClient.DrainNode(nodeID); err != nil {
 					logging.Error("core/cluster_scaling: an error occurred while "+
 						"attempting to place node %v from worker pool %v in drain mode: "+
@@ -214,6 +227,7 @@ func (s *Server) workerPoolScaling(id int, pools <-chan string,
 				}
 
 				// Initiate cluster scaling operation by calling the scaling provider.
+				logging.Debug("core/cluster_scaling: thread %v - calling scale out", id)
 				err := workerPool.ScalingProvider.Scale(workerPool, s.config, nodeRegistry)
 				if err != nil {
 					logging.Error("core/cluster_scaling: an error occurred while "+
@@ -224,6 +238,7 @@ func (s *Server) workerPoolScaling(id int, pools <-chan string,
 
 				// Obtain a read/write lock on the node registry, write the worker
 				// pool state object back to the node registry and release the lock.
+				logging.Debug("core/cluster_scaling: thread %v - updating worker pool state", id)
 				nodeRegistry.Lock.Lock()
 				nodeRegistry.WorkerPools[workerPool.Name].State = workerPool.State
 				nodeRegistry.Lock.Unlock()
@@ -231,6 +246,7 @@ func (s *Server) workerPoolScaling(id int, pools <-chan string,
 			}
 
 			// Our metric counter to track successful cluster scaling activities.
+			logging.Debug("core/cluster_scaling: thread %v - updating metrics", id)
 			m := fmt.Sprintf("scale_%s", strings.ToLower(poolCapacity.ScalingDirection))
 			metrics.IncrCounter([]string{"cluster", workerPool.Name, m, "success"}, 1)
 		}()
