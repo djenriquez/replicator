@@ -180,10 +180,10 @@ func checkClusterScalingResult(activityID *string,
 	svc *autoscaling.AutoScaling) error {
 
 	// Setup our timeout and ticker value.
-	ticker := time.NewTicker(time.Second * time.Duration(10))
+	ticker := time.NewTicker(time.Second * 10)
 	defer ticker.Stop()
 
-	timeOut := time.NewTicker(time.Minute * 10)
+	timeOut := time.NewTicker(time.Minute * 3)
 	defer timeOut.Stop()
 
 	for {
