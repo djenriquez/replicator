@@ -168,7 +168,7 @@ func (c *nomadClient) DrainNode(nodeID string) (err error) {
 
 	drainSpec := &nomad.DrainSpec{
 		Deadline:         time.Second * time.Duration(30),
-		IgnoreSystemJobs: true,
+		IgnoreSystemJobs: false,
 	}
 	_, err = c.nomad.Nodes().UpdateDrain(nodeID, drainSpec, false, &nomad.WriteOptions{})
 	if err != nil {

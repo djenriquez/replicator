@@ -166,9 +166,7 @@ func (sp *AwsScalingProvider) scaleIn(workerPool *structs.WorkerPool, config *st
 		if *resp.Activities[0].StatusCode != autoscaling.ScalingActivityStatusCodeSuccessful {
 			logging.Debug("cloud/aws: Initial detach for %v was not yet successful, polling", instanceID)
 			err = checkClusterScalingResult(resp.Activities[0].ActivityId, sp.AsgService)
-			if err != nil {
-				return err
-			}
+			logging.Error("cloud/aws: Unable to verify detach of %v", instanceID)
 		}
 		logging.Debug("cloud/aws: %v successfully detached, terminating instance", instanceID)
 	}
