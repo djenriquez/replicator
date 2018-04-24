@@ -13,7 +13,7 @@ import (
 )
 
 // translateIptoID translates the IP address of a node to the EC2 instance ID.
-func translateIptoID(ip, region string) (id string) {
+func translateIptoID(ip, region string) (id string, err error) {
 	sess := session.Must(session.NewSession())
 	svc := ec2.New(sess, &aws.Config{Region: aws.String(region)})
 
@@ -33,10 +33,14 @@ func translateIptoID(ip, region string) (id string) {
 	if err != nil {
 		logging.Error("cloud/aws: unable to convert node IP to AWS EC2 "+
 			"instance ID: %v", err)
-		return
+		return "", err
 	}
 
-	return *resp.Reservations[0].Instances[0].InstanceId
+	if resp == nil || resp.Reservations == nil || len(resp.Reservations) < 1 || resp.Reservations[0].Instances == nil || len(resp.Reservations[0].Instances) < 1 {
+		return "", fmt.Errorf("cloud/aws: DescribeInstances returned an empty response")
+	}
+
+	return *resp.Reservations[0].Instances[0].InstanceId, nil
 }
 
 // terminateInstance terminates a specified EC2 instance and confirms success.

@@ -135,7 +135,11 @@ func (sp *AwsScalingProvider) scaleIn(workerPool *structs.WorkerPool, config *st
 		workerPool.State.EligibleNodes[:len(workerPool.State.EligibleNodes)-1]
 
 	// Translate the node IP address to the EC2 instance ID.
-	instanceID := translateIptoID(targetNode, workerPool.Region)
+	instanceID, err := translateIptoID(targetNode, workerPool.Region)
+	if err != nil {
+		logging.Error("cloud/aws: as error occured while attempting to translate IP to instance ID: %v", err)
+		return err
+	}
 
 	// Setup parameters for the AWS API call to detach the target node
 	// from the worker pool autoscaling group.
@@ -266,7 +270,10 @@ func (sp *AwsScalingProvider) failedEventCleanup(workerNode string,
 
 	// Translate the IP address of the most recently launched node to
 	// EC2 instance ID so the node can be terminated or detached.
-	instanceID := translateIptoID(workerNode, workerPool.Region)
+	instanceID, err := translateIptoID(workerNode, workerPool.Region)
+	if err != nil {
+		return err
+	}
 
 	// If the retry threshold defined for the worker pool has been reached, we
 	// will detach the instance from the autoscaling group and decrement the
