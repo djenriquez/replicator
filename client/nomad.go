@@ -105,15 +105,15 @@ func (c *nomadClient) MostUtilizedResource(alloc *structs.ClusterCapacity) {
 
 // MostUtilizedGroupResource determines whether CPU or Mem are the most utilized
 // resource of a Group.
-func (c *nomadClient) MostUtilizedGroupResource(gsp *structs.GroupScalingPolicy) {
+func (c *nomadClient) MostUtilizedGroupResource(gsp *structs.GroupScalingPolicy) string {
 	max := (helper.Max(gsp.Tasks.Resources.CPUPercent,
 		gsp.Tasks.Resources.MemoryPercent))
 
 	switch max {
 	case gsp.Tasks.Resources.CPUPercent:
-		gsp.ScalingMetric = ScalingMetricProcessor
+		return ScalingMetricProcessor
 	case gsp.Tasks.Resources.MemoryPercent:
-		gsp.ScalingMetric = ScalingMetricMemory
+		return ScalingMetricMemory
 	}
 }
 
@@ -261,8 +261,11 @@ func (c *nomadClient) EvaluateJobScaling(jobName string, jobScalingPolicies []*s
 			return err
 		}
 
-		c.GetAvgAllocResourceUtilization(jobAllocs, gsp)
-		c.MostUtilizedGroupResource(gsp)
+		avgCPU, avgMem := c.GetAvgAllocCPUMemUtilization(jobAllocs, gsp)
+		gsp.Tasks.Resources.CPUPercent = avgCPU
+		gsp.Tasks.Resources.MemoryPercent = avgMem
+
+		gsp.ScalingMetric = c.MostUtilizedGroupResource(gsp)
 
 		// Reset the direction
 		gsp.ScaleDirection = ScalingDirectionNone
@@ -286,10 +289,12 @@ func (c *nomadClient) EvaluateJobScaling(jobName string, jobScalingPolicies []*s
 	return
 }
 
-// GetAvgAllocResourceUtilization identifies all allocations for an active job.
-func (c *nomadClient) GetAvgAllocResourceUtilization(allocs []*nomad.AllocationListStub, gsp *structs.GroupScalingPolicy) {
+// GetAvgAllocCPUMemUtilization calculates the average cpu/mem utilization of a set of allocations
+func (c *nomadClient) GetAvgAllocCPUMemUtilization(allocs []*nomad.AllocationListStub, gsp *structs.GroupScalingPolicy) (cpuPercent float64, memPercent float64) {
 	var cpuPercentAll float64
 	var memPercentAll float64
+	cpuPercent = 0
+	memPercent = 0
 	nAllocs := 0
 
 	for _, allocationStub := range allocs {
@@ -305,15 +310,13 @@ func (c *nomadClient) GetAvgAllocResourceUtilization(allocs []*nomad.AllocationL
 			}
 		}
 	}
+
 	if nAllocs > 0 {
-		gsp.Tasks.Resources.CPUPercent = cpuPercentAll / float64(nAllocs)
-		gsp.Tasks.Resources.MemoryPercent = memPercentAll / float64(nAllocs)
-
-	} else {
-		gsp.Tasks.Resources.CPUPercent = 0
-		gsp.Tasks.Resources.MemoryPercent = 0
-
+		cpuPercent = cpuPercentAll / float64(nAllocs)
+		memPercent = memPercentAll / float64(nAllocs)
 	}
+
+	return cpuPercent, memPercent
 }
 
 // VerifyNodeHealth evaluates whether a specified worker node is a healthy
