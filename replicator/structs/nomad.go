@@ -41,8 +41,8 @@ type NomadClient interface {
 	// allocation.
 	GetAllocationStats(*nomad.Allocation, *GroupScalingPolicy) (float64, float64)
 
-	// GetJobAllocations identifies all allocations for an active job.
-	GetJobAllocations([]*nomad.AllocationListStub, *GroupScalingPolicy)
+	// GetAvgAllocCPUMemUtilization calculates the average cpu/mem utilization of a set of allocations
+	GetAvgAllocCPUMemUtilization([]*nomad.AllocationListStub, *GroupScalingPolicy) (float64, float64)
 
 	// IsJobInDeployment checks to see whether the supplied Nomad job is currently
 	// in the process of a deployment.

@@ -147,8 +147,8 @@ func TestNomad_MostUtilizedGroupResource(t *testing.T) {
 		},
 	}
 
-	client.MostUtilizedGroupResource(memGSP)
-	client.MostUtilizedGroupResource(cpuGSP)
+	memGSP.ScalingMetric = client.MostUtilizedGroupResource(memGSP)
+	cpuGSP.ScalingMetric = client.MostUtilizedGroupResource(cpuGSP)
 
 	if memGSP.ScalingMetric != ScalingMetricMemory {
 		t.Fatalf("expected scaling metric %v but got %v", ScalingMetricMemory, memGSP.ScalingMetric)
