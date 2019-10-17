@@ -1,14 +1,11 @@
 package client
 
 import (
-	"encoding/json"
-	"fmt"
 	"time"
+	"fmt"
 
 	"github.com/davecgh/go-spew/spew"
-
 	"github.com/pkg/errors"
-
 	nomad "github.com/hashicorp/nomad/api"
 	nomadStructs "github.com/hashicorp/nomad/nomad/structs"
 	"github.com/mitchellh/mapstructure"
