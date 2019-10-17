@@ -256,9 +256,16 @@ func (c *nomadClient) EvaluateJobScaling(jobName string, jobScalingPolicies []*s
 			return
 		}
 
-		allocs, _, err := c.nomad.Jobs().Allocations(jobName, false, c.queryOptions())
+		jobAllocs, _, err := c.nomad.Jobs().Allocations(jobName, false, c.queryOptions())
 		if err != nil {
 			return err
+		}
+
+		allocs := make([]*AllocationListStub, 0)
+		for _, alloc := range jobAllocs {
+			if alloc.TaskGroup == gsp.GroupName {
+				allocs = append(allocs, alloc)
+			}
 		}
 
 		c.GetJobAllocations(allocs, gsp)
