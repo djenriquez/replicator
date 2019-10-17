@@ -261,14 +261,7 @@ func (c *nomadClient) EvaluateJobScaling(jobName string, jobScalingPolicies []*s
 			return err
 		}
 
-		allocs := make([]*AllocationListStub, 0)
-		for _, alloc := range jobAllocs {
-			if alloc.TaskGroup == gsp.GroupName {
-				allocs = append(allocs, alloc)
-			}
-		}
-
-		c.GetAvgAllocResourceUtilization(allocs, gsp)
+		c.GetAvgAllocResourceUtilization(jobAllocs, gsp)
 		c.MostUtilizedGroupResource(gsp)
 
 		// Reset the direction
@@ -300,7 +293,8 @@ func (c *nomadClient) GetAvgAllocResourceUtilization(allocs []*nomad.AllocationL
 	nAllocs := 0
 
 	for _, allocationStub := range allocs {
-		if (allocationStub.ClientStatus == nomadStructs.AllocClientStatusRunning) &&
+		if (allocationStub.TaskGroup == gsp.GroupName) &&
+			(allocationStub.ClientStatus == nomadStructs.AllocClientStatusRunning) &&
 			(allocationStub.DesiredStatus == nomadStructs.AllocDesiredStatusRun) {
 
 			if alloc, _, err := c.nomad.Allocations().Info(allocationStub.ID, c.queryOptions()); err == nil && alloc != nil {
