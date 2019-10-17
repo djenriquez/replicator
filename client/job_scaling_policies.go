@@ -1,7 +1,13 @@
 package client
 
 import (
+	"encoding/json"
+	"fmt"
 	"time"
+
+	"github.com/davecgh/go-spew/spew"
+
+	"github.com/pkg/errors"
 
 	nomad "github.com/hashicorp/nomad/api"
 	nomadStructs "github.com/hashicorp/nomad/nomad/structs"
@@ -161,14 +167,14 @@ func updateScalingPolicy(jobName, groupName string, groupMeta map[string]string,
 	}
 	decoder, err := mapstructure.NewDecoder(decodeConf)
 	if err != nil {
-		logging.Debug("client/job_scaling_policies: Failed to create a decoder for %s", groupName)
+		logging.Debug(errors.Wrap(err, fmt.Sprintf("client/job_scaling_policies: Failed to create a decoder for %s", groupName)))
 		return
 	}
 
 	// Decode the meta and add the group name to the correct field as this is not
 	// available in the meta.
 	if err = decoder.Decode(groupMeta); err != nil {
-		logging.Debug("client/job_scaling_policies: Failed to decode the groupMeta for %s", groupName)
+		logging.Debug(errors.Wrap(err, fmt.Sprintf("client/job_scaling_policies: Failed to decode the groupMeta for %s \n%s", groupName, spew.Sdump(groupMeta)))
 		return
 	}
 
