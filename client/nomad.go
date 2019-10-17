@@ -104,17 +104,16 @@ func (c *nomadClient) MostUtilizedResource(alloc *structs.ClusterCapacity) {
 }
 
 // MostUtilizedGroupResource determines whether CPU or Mem are the most utilized
-// resource of a Group.
+// resource of a Group. Defaults to CPU.
 func (c *nomadClient) MostUtilizedGroupResource(gsp *structs.GroupScalingPolicy) string {
 	max := (helper.Max(gsp.Tasks.Resources.CPUPercent,
 		gsp.Tasks.Resources.MemoryPercent))
 
-	switch max {
-	case gsp.Tasks.Resources.CPUPercent:
-		return ScalingMetricProcessor
-	case gsp.Tasks.Resources.MemoryPercent:
+	if max == gsp.Tasks.Resources.MemoryPercent {
 		return ScalingMetricMemory
 	}
+
+	return ScalingMetricProcessor
 }
 
 // LeastAllocatedNode determines which worker pool node is consuming the least
