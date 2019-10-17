@@ -268,7 +268,7 @@ func (c *nomadClient) EvaluateJobScaling(jobName string, jobScalingPolicies []*s
 			}
 		}
 
-		c.GetJobAllocations(allocs, gsp)
+		c.GetAvgAllocResourceUtilization(allocs, gsp)
 		c.MostUtilizedGroupResource(gsp)
 
 		// Reset the direction
@@ -293,8 +293,8 @@ func (c *nomadClient) EvaluateJobScaling(jobName string, jobScalingPolicies []*s
 	return
 }
 
-// GetJobAllocations identifies all allocations for an active job.
-func (c *nomadClient) GetJobAllocations(allocs []*nomad.AllocationListStub, gsp *structs.GroupScalingPolicy) {
+// GetAvgAllocResourceUtilization identifies all allocations for an active job.
+func (c *nomadClient) GetAvgAllocResourceUtilization(allocs []*nomad.AllocationListStub, gsp *structs.GroupScalingPolicy) {
 	var cpuPercentAll float64
 	var memPercentAll float64
 	nAllocs := 0
