@@ -7,6 +7,9 @@ WORKDIR $APP_PATH
 
 COPY . $APP_PATH
 
+ENV XC_ARCH amd64
+ENV XC_OS   linux
+
 RUN \
   apt-get install -y git && \
   go get -u github.com/mitchellh/gox && \
@@ -18,7 +21,7 @@ LABEL vendor "Elsevier Core Engineering"
 LABEL documentation "https://github.com/elsevier-core-engineering/replicator"
 
 ENV APP_PATH /go/src/github.com/elsevier-core-engineering/replicator
-ENV REPLICATOR_VERSION v1.0.3
+ENV REPLICATOR_VERSION v1.2.0
 
 WORKDIR /usr/local/bin/
 
