@@ -1,11 +1,14 @@
 package client
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	nomad "github.com/hashicorp/nomad/api"
 	nomadStructs "github.com/hashicorp/nomad/nomad/structs"
 	"github.com/mitchellh/mapstructure"
+	"github.com/pkg/errors"
 
 	"github.com/elsevier-core-engineering/replicator/helper"
 	"github.com/elsevier-core-engineering/replicator/logging"
@@ -102,7 +105,7 @@ func (c *nomadClient) jobScalingPolicyProcessor(jobID string, scaling *structs.J
 	for _, group := range jobInfo.TaskGroups {
 
 		if group.Update == nil {
-			logging.Error("client/job_scaling_policies: job %s and group %v is missing update stanza",
+			logging.Debug("client/job_scaling_policies: job %s and group %v is missing update stanza",
 				jobID, *group.Name)
 			continue
 		}
@@ -161,12 +164,14 @@ func updateScalingPolicy(jobName, groupName string, groupMeta map[string]string,
 	}
 	decoder, err := mapstructure.NewDecoder(decodeConf)
 	if err != nil {
+		logging.Debug(errors.Wrap(err, fmt.Sprintf("client/job_scaling_policies: Failed to create a decoder for %s", groupName)).Error())
 		return
 	}
 
 	// Decode the meta and add the group name to the correct field as this is not
 	// available in the meta.
 	if err = decoder.Decode(groupMeta); err != nil {
+		logging.Debug(errors.Wrap(err, fmt.Sprintf("client/job_scaling_policies: Failed to decode the groupMeta for %s \n%s", groupName, spew.Sdump(groupMeta))).Error())
 		return
 	}
 

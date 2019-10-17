@@ -10,6 +10,7 @@ require (
 	github.com/aws/aws-sdk-go v1.7.10-0.20170315184146-2b26ad567f30
 	github.com/cihub/seelog v0.0.0-20170130134532-f561c5e57575 // indirect
 	github.com/dariubs/percent v0.0.0-20161012123256-6a210960ed74
+	github.com/davecgh/go-spew v1.1.1
 	github.com/franela/goblin v0.0.0-20181003173013-ead4ad1d2727 // indirect
 	github.com/franela/goreq v0.0.0-20170418064916-b5b0f5eb2d16 // indirect
 	github.com/go-ini/ini v1.48.0 // indirect
@@ -35,6 +36,7 @@ require (
 	github.com/mitchellh/mapstructure v0.0.0-20170307201123-53818660ed49
 	github.com/onsi/gomega v1.7.0 // indirect
 	github.com/opsgenie/opsgenie-go-sdk v0.0.0-20170719084830-75d4f6257bfb
+	github.com/pkg/errors v0.8.1
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20190731233626-505e41936337 // indirect
 	github.com/ugorji/go v0.0.0-20170620060102-0053ebfd9d0e
