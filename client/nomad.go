@@ -104,17 +104,16 @@ func (c *nomadClient) MostUtilizedResource(alloc *structs.ClusterCapacity) {
 }
 
 // MostUtilizedGroupResource determines whether CPU or Mem are the most utilized
-// resource of a Group.
-func (c *nomadClient) MostUtilizedGroupResource(gsp *structs.GroupScalingPolicy) {
+// resource of a Group. Defaults to CPU.
+func (c *nomadClient) MostUtilizedGroupResource(gsp *structs.GroupScalingPolicy) string {
 	max := (helper.Max(gsp.Tasks.Resources.CPUPercent,
 		gsp.Tasks.Resources.MemoryPercent))
 
-	switch max {
-	case gsp.Tasks.Resources.CPUPercent:
-		gsp.ScalingMetric = ScalingMetricProcessor
-	case gsp.Tasks.Resources.MemoryPercent:
-		gsp.ScalingMetric = ScalingMetricMemory
+	if max == gsp.Tasks.Resources.MemoryPercent {
+		return ScalingMetricMemory
 	}
+
+	return ScalingMetricProcessor
 }
 
 // LeastAllocatedNode determines which worker pool node is consuming the least
@@ -256,13 +255,16 @@ func (c *nomadClient) EvaluateJobScaling(jobName string, jobScalingPolicies []*s
 			return
 		}
 
-		allocs, _, err := c.nomad.Jobs().Allocations(jobName, false, c.queryOptions())
+		jobAllocs, _, err := c.nomad.Jobs().Allocations(jobName, false, c.queryOptions())
 		if err != nil {
 			return err
 		}
 
-		c.GetJobAllocations(allocs, gsp)
-		c.MostUtilizedGroupResource(gsp)
+		avgCPU, avgMem := c.GetAvgAllocCPUMemUtilization(jobAllocs, gsp)
+		gsp.Tasks.Resources.CPUPercent = avgCPU
+		gsp.Tasks.Resources.MemoryPercent = avgMem
+
+		gsp.ScalingMetric = c.MostUtilizedGroupResource(gsp)
 
 		// Reset the direction
 		gsp.ScaleDirection = ScalingDirectionNone
@@ -286,14 +288,17 @@ func (c *nomadClient) EvaluateJobScaling(jobName string, jobScalingPolicies []*s
 	return
 }
 
-// GetJobAllocations identifies all allocations for an active job.
-func (c *nomadClient) GetJobAllocations(allocs []*nomad.AllocationListStub, gsp *structs.GroupScalingPolicy) {
+// GetAvgAllocCPUMemUtilization calculates the average cpu/mem utilization of a set of allocations
+func (c *nomadClient) GetAvgAllocCPUMemUtilization(allocs []*nomad.AllocationListStub, gsp *structs.GroupScalingPolicy) (cpuPercent float64, memPercent float64) {
 	var cpuPercentAll float64
 	var memPercentAll float64
+	cpuPercent = 0
+	memPercent = 0
 	nAllocs := 0
 
 	for _, allocationStub := range allocs {
-		if (allocationStub.ClientStatus == nomadStructs.AllocClientStatusRunning) &&
+		if (allocationStub.TaskGroup == gsp.GroupName) &&
+			(allocationStub.ClientStatus == nomadStructs.AllocClientStatusRunning) &&
 			(allocationStub.DesiredStatus == nomadStructs.AllocDesiredStatusRun) {
 
 			if alloc, _, err := c.nomad.Allocations().Info(allocationStub.ID, c.queryOptions()); err == nil && alloc != nil {
@@ -304,15 +309,13 @@ func (c *nomadClient) GetJobAllocations(allocs []*nomad.AllocationListStub, gsp 
 			}
 		}
 	}
+
 	if nAllocs > 0 {
-		gsp.Tasks.Resources.CPUPercent = cpuPercentAll / float64(nAllocs)
-		gsp.Tasks.Resources.MemoryPercent = memPercentAll / float64(nAllocs)
-
-	} else {
-		gsp.Tasks.Resources.CPUPercent = 0
-		gsp.Tasks.Resources.MemoryPercent = 0
-
+		cpuPercent = cpuPercentAll / float64(nAllocs)
+		memPercent = memPercentAll / float64(nAllocs)
 	}
+
+	return cpuPercent, memPercent
 }
 
 // VerifyNodeHealth evaluates whether a specified worker node is a healthy
